@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model VaultItem {
+  id         String          @id @default(cuid())
+  title      String
+  type       String
+  category   String
+  summary    String
+  content    String
+  sourceName String?
+  fileUrl    String?
+  mimeType   String?
+  size       Int             @default(0)
+  favorite   Boolean         @default(false)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  tags       VaultItemTag[]
+  quiz       QuizQuestion?
+  attempts   QuizAttempt[]
+
+  @@index([category])
+  @@index([type])
+  @@index([favorite])
+  @@index([updatedAt])
+}
+
+model Tag {
+  id    String         @id @default(cuid())
+  name  String         @unique
+  items VaultItemTag[]
+}
+
+model VaultItemTag {
+  itemId String
+  tagId  String
+  item   VaultItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  tag    Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, tagId])
+  @@index([tagId])
+}
+
+model QuizQuestion {
+  id       String        @id @default(cuid())
+  itemId   String        @unique
+  question String
+  choices  String
+  answer   String
+  item     VaultItem     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  attempts QuizAttempt[]
+}
+
+model QuizAttempt {
+  id             String        @id @default(cuid())
+  itemId         String?
+  questionId     String?
+  selectedAnswer String
+  correct        Boolean
+  createdAt      DateTime      @default(now())
+  item           VaultItem?     @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  question       QuizQuestion?  @relation(fields: [questionId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([itemId])
+  @@index([questionId])
+}
+
+model AssistantRun {
+  id        String   @id @default(cuid())
+  query     String
+  reply     String
+  itemId    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
